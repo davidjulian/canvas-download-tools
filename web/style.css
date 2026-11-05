@@ -15,4 +15,4 @@
 
 #about-dialog a{color:var(--accent);text-underline-offset:3px}
 
-#about-dialog .about-heading{position:sticky;top:0;background:#fff;z-index:1}
+#about-dialog .about-heading{position:sticky;top:0;background:#fff;box-shadow:0 -28px 0 #fff;z-index:1}
