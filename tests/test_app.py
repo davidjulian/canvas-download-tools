@@ -233,6 +233,9 @@ class BrowserInterfaceTests(InterfaceTests):
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(self.interface_url())
+                # The form receives its initial values from an asynchronous
+                # local state request. Wait before simulating instructor input.
+                page.wait_for_function("initialized === true")
                 page.locator("#canvas-url").fill(origin)
                 page.locator("#output").fill(str(output))
                 expect(page.locator("#relearn")).to_be_checked()
