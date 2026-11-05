@@ -1,5 +1,7 @@
 # Canvas Download Tools
 
+[Windows download](https://github.com/davidjulian/canvas-download-tools/releases/download/v0.2.1-rc1/canvas-download-tools-windows.zip) · [Mac download](https://github.com/davidjulian/canvas-download-tools/releases/download/v0.2.1-rc1/canvas-download-tools-macos.zip) · [Release notes](https://github.com/davidjulian/canvas-download-tools/releases/tag/v0.2.1-rc1)
+
 One local app with two tools for instructors using Canvas New Quizzes:
 
 | Tool | Use it for |
