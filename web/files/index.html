@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canvas Download Tools</title><link rel="stylesheet" href="style.css"><script src="/common.js" defer></script><script src="app.js" defer></script></head>
+<body data-tool="files"><div class="shell">
+<header class="masthead"><div><div class="eyebrow">FACULTY TOOLS <span>/</span> NEW QUIZZES</div>
+<h1>Canvas Download Tools</h1><p>Submitted files — download files, with student names, to your computer.</p></div>
+<div class="local-badge"><span class="dot"></span> Local session</div></header><nav class="tool-switch" aria-label="Download tool"><a href="/">All tools</a><a href="/logs/" data-tool="logs">Quiz activity logs</a><a href="/files/" data-tool="files">Submitted files</a></nav><p id="shared-notice" class="shared-notice" role="status" hidden></p>
+<ol class="steps" aria-label="Download steps"><li id="step1"><span>1</span> Connect</li><li id="step2"><span>2</span> Select file</li><li id="step3"><span>3</span> Check first file</li><li id="step4"><span>4</span> Download</li></ol>
+<div class="layout"><aside class="panel settings"><div class="eyebrow">YOUR DOWNLOADS</div><h2>Set up a collection</h2>
+<form id="setup"><label for="canvas-url">Canvas URL</label><input id="canvas-url" type="url" placeholder="https://yourcollege.instructure.com/" required autocomplete="off" spellcheck="false"><p class="hint">Your institution’s Canvas home address.</p>
+<label for="output">Save files in</label><div class="folder-row"><input id="output" type="text" required autocomplete="off" spellcheck="false"><button id="browse" type="button" class="secondary">Browse…</button></div><p class="hint">Starts with Downloads. Each collection creates its own dated folder.</p>
+<label for="extension">File type</label><input id="extension" type="text" placeholder="All file types" maxlength="12" autocomplete="off" spellcheck="false"><p class="hint">Leave blank for all types, or enter pdf, docx, model, etc.</p>
+<label for="browser">Canvas browser</label><select id="browser"><option value="msedge">Microsoft Edge</option><option value="chrome">Google Chrome</option></select>
+<details><summary>Student name setup</summary><label class="check-row"><input id="relearn" type="checkbox"><span>Choose the student name control again</span></label><p class="hint">The app normally remembers its location.</p></details>
+<button id="launch" class="primary wide" type="submit">Open Canvas</button></form>
+<div class="privacy-note"><strong>Your records stay with you.</strong><p>Files, names and sign-in state stay on this computer. No student records are sent to GitHub or an AI service.</p></div></aside>
+<main class="panel workspace" aria-live="polite"><div class="workspace-heading"><div><div class="eyebrow">COLLECTION</div><h2 id="stage-title">Ready when you are</h2></div><span class="status" id="status">Not started</span></div>
+<p id="stage-description">Choose your Canvas address and download folder, then open Canvas to begin.</p>
+<div id="error" class="notice error" role="alert" hidden></div><div id="local-error" class="notice error" role="alert" hidden></div>
+<section id="welcome" class="welcome"><div class="document-icon" aria-hidden="true">↓</div><h3>One setup, then automatic downloads</h3><p>Open SpeedGrader and choose the first real student. Download one file for a check, then let the app move through the remaining students.</p>
+<div class="scope-note"><strong>Latest displayed submission, one file per student</strong><p>Choose the latest attempt before starting. The app follows the current student list and leaves attempt selection alone. Multiple attachments within one submission are not collected automatically.</p></div></section>
+<section id="navigate" hidden><div class="instruction"><span class="instruction-number">1</span><p>In the separate Canvas window, sign in, open the completed New Quiz in SpeedGrader and choose the <strong>first real student</strong>. Choose the latest submission and wait until the file appears. The quiz tab may stay open.</p></div><button id="ready" class="primary">SpeedGrader is ready</button></section>
+<section id="pick-student" hidden><div class="instruction"><span class="instruction-number">2</span><p>In Canvas, click the <strong>currently displayed student’s name</strong> once. Click the name control, not a different student in its menu. The app will remember this location.</p></div></section>
+<section id="picker-retry" hidden><button id="retry" class="primary">Try choosing the name again</button></section>
+<section id="learning" hidden><div class="instruction"><span class="instruction-number">2</span><p>In Canvas, click <strong>one submitted filename</strong> that downloads the actual file. The app is listening for that download.</p></div></section>
+<section id="checking" hidden><div class="instruction"><span class="instruction-number">3</span><p>Open the downloaded file or folder below. Check the file contents and the student name at the beginning of its filename. The original extension is preserved.</p></div>
+<label class="check-row"><input id="reviewed" type="checkbox"><span>I checked the first file and its student name.</span></label><button id="checked" class="primary" disabled>Checked — download remaining files</button></section>
+<section id="progress-section" hidden><div class="progress-caption"><strong id="saved-count">0 files saved</strong><span id="skip-count">0 skipped</span></div><p class="hint" id="progress-note">Keep the Canvas window open and leave it alone while downloads run.</p></section>
+<section class="output-section" id="output-section" hidden><h3>Saved files</h3><p id="output-path"></p><div class="output-actions"><button id="open-folder" class="secondary">Open download folder</button><button id="open-first" class="secondary">Open first file</button></div></section>
+<div class="workspace-footer"><span id="version"></span><div><button id="stop" class="danger" hidden>Stop</button> <button id="quit" class="secondary">Quit local app</button></div></div>
+</main></div><footer class="page-footer"><p>Use with your authorized instructor access. Completed files are preserved if you stop.</p><p>Windows &amp; macOS · Chrome or Edge</p></footer></div></body></html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Download Tools</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/common.js" defer></script><script src="app.js" defer></script>
+</head>
+<body data-tool="logs">
+<div class="shell">
+  <header class="masthead">
+    <div><div class="eyebrow">FACULTY TOOLS <span>/</span> NEW QUIZZES</div>
+      <h1>Canvas Download Tools</h1>
+      <p>Quiz activity logs — collect logs and summarize focus events on your computer.</p>
+    </div>
+    <div class="header-actions"><button id="about-open" class="secondary" type="button" aria-haspopup="dialog">About</button><div class="local-badge"><span class="dot"></span> Local session</div></div>
+  </header><nav class="tool-switch" aria-label="Download tool"><a href="/">All tools</a><a href="/logs/" data-tool="logs">Quiz activity logs</a><a href="/files/" data-tool="files">Submitted files</a></nav><p id="shared-notice" class="shared-notice" role="status" hidden></p>
+
+  <ol class="steps" aria-label="Export steps">
+    <li id="step1"><span>1</span> Connect</li><li id="step2"><span>2</span> Review names</li>
+    <li id="step3"><span>3</span> Check first log</li><li id="step4"><span>4</span> Collect logs</li>
+  </ol>
+
+  <div class="layout">
+    <aside class="panel settings">
+      <div class="eyebrow">YOUR EXPORT</div><h2>Set up a collection</h2>
+      <form id="setup">
+        <label for="canvas-url">Canvas URL</label>
+        <input id="canvas-url" type="url" placeholder="https://yourcollege.instructure.com/" required spellcheck="false" autocomplete="off">
+        <p class="hint">Use your institution’s Canvas home address.</p>
+
+        <label for="output">Save output in</label>
+        <div class="folder-row"><input id="output" type="text" required placeholder="Choose an approved folder" autocomplete="off" spellcheck="false"><button type="button" id="browse" class="secondary">Browse…</button></div>
+        <p class="hint">Each run creates a new folder here.</p>
+
+        <label for="folder-label">Quiz name or folder label <span class="hint">(optional)</span></label>
+        <input id="folder-label" type="text" maxlength="200" placeholder="e.g., PCB3713C Exam 2" autocomplete="off" spellcheck="false" aria-describedby="folder-label-help">
+        <p id="folder-label-help" class="hint">Used only for the output folder name. A date and unique suffix are added automatically. Leave blank for the default name.</p>
+
+        <fieldset id="export-modes" class="export-modes"><legend>Export mode</legend>
+          <label class="mode-option"><input id="mode-coded" type="radio" name="export-mode" value="coded" checked><span><strong>Coded logs</strong><small>Random IDs, identifier removal and a separate private name key.</small></span></label>
+          <label class="mode-option"><input id="mode-named" type="radio" name="export-mode" value="named"><span><strong>Named logs</strong><small>Student names and original dates and times. No coding or name key.</small></span></label>
+        </fieldset>
+        <p id="mode-note" class="hint">Review coded files before sharing. The private folder still contains identifying records.</p>
+
+        <details><summary>Browser</summary><label class="sr-only" for="browser">Dedicated Canvas browser</label><select id="browser"><option value="msedge">Microsoft Edge</option><option value="chrome">Google Chrome</option></select><p class="hint">Opens a separate window for Canvas. Sign in there yourself.</p></details>
+        <label class="check-row"><input id="keep-canvas-open" type="checkbox" aria-describedby="keep-canvas-help"><span>Keep Canvas open for another quiz</span></label>
+        <p id="keep-canvas-help" class="hint">After a successful collection only. Quit local app closes the window. Canvas can still expire your session.</p>
+        <button type="submit" class="primary wide" id="launch">Open Canvas</button>
+      </form>
+      <div class="privacy-note"><strong>Your records stay with you.</strong><p>Logs and names are processed locally. No student data is sent to an AI service. Canvas still uses your normal institutional sign-in and services.</p></div>
+    </aside>
+
+    <main class="panel workspace">
+      <div class="workspace-heading"><div><div class="eyebrow">COLLECTION</div><h2 id="stage-title">Ready when you are</h2></div><span id="status" class="status">Not started</span></div>
+      <p id="stage-description">Choose your Canvas address and output folder, then open Canvas to begin.</p>
+      <div id="error" class="notice error" role="alert" hidden></div>
+      <details id="diagnostic-details" hidden><summary>Diagnostic details (counts only; no names or log text)</summary><pre id="diagnostic-text"></pre></details>
+      <div id="local-error" class="notice error" role="alert" hidden></div>
+      <div id="update-note" class="notice" hidden>Updated app files are available. After your collection finishes, use Quit local app and reopen with the Start App launcher to enable the latest Moderate detection and retry repair.</div>
+
+      <section id="welcome" class="welcome">
+        <div class="document-icon" aria-hidden="true">≡</div>
+        <h3>A local copy of each displayed log</h3>
+        <p>The app downloads the displayed text from each View Log in order. Choose coded logs with a separate private name key, or named logs for an environment authorized for identified student records. A separate local table summarizes recorded focus events.</p>
+        <div class="scope-note"><strong>Numbered Moderate pages are collected automatically</strong><p>The app scans the recognized student pages, combines the names for one review, then downloads the logs into one folder and summary. Your filters stay in effect. Hidden attempts and additional pages inside an event log are not collected.</p></div>
+      </section>
+
+      <section id="navigate" hidden>
+        <div class="instruction"><span class="instruction-number">1</span><div><h3>In the separate Canvas window</h3><p>Sign in to Canvas and open your completed New Quiz, then go to <strong>Build</strong> → <strong>Moderate</strong>. Set any desired filters and students per page setting and wait for the student list to load.</p></div></div>
+        <button id="moderate" class="primary">I’m on Moderate — find logs</button>
+      </section>
+
+      <section id="review" hidden>
+        <div class="scope-note"><strong id="count-label"></strong><p>Check the combined list against the intended Moderate pages. Each position shows its source page. These are proposed names; correct any missing or incorrect names before starting. Repeated names can represent separate attempts. Do not change Canvas filters, sorting or page size after this review.</p></div>
+        <div class="table-wrap"><table><thead><tr><th scope="col">Position</th><th scope="col">Student name from Moderate</th></tr></thead><tbody id="name-rows"></tbody></table></div>
+        <label class="check-row"><input id="names-reviewed" type="checkbox"><span>I checked the names, count and intended attempts against Moderate.</span></label>
+        <button id="start" class="primary" disabled>Start collection</button>
+      </section>
+
+      <section id="first-check" hidden>
+        <div class="scope-note"><strong>One log downloaded. Please check it locally.</strong><p id="first-check-help">Use the private name key to confirm the ID belongs to the correct student. Compare the downloaded event text and elapsed times with Canvas. The text keeps the original event wording; start and finish dates and clock times are omitted.</p></div>
+        <button id="open-first" class="secondary">Open first coded log</button>
+        <button id="open-key-check" class="secondary">Open private name key</button>
+        <p class="hint">Check the final event and any need for more event pages, scrolling or expansion. If text is missing, use Stop.</p>
+        <label class="check-row"><input id="first-reviewed" type="checkbox"><span id="first-check-label">I checked the ID in the private key and the downloaded text against Canvas.</span></label>
+        <button id="checked" class="primary" disabled>Checked — collect remaining logs</button>
+      </section>
+
+      <section id="progress-section" hidden aria-label="Collection progress">
+        <div class="progress-caption"><strong id="progress-text">0 of 0 logs saved</strong><span id="percent">0%</span></div>
+        <progress id="progress" value="0" max="1"></progress>
+        <p class="hint" id="progress-note">Please leave the dedicated Canvas window alone while collection runs.</p>
+      </section>
+
+      <section id="result" hidden>
+        <div class="notice success" id="result-description"></div>
+        <div id="duplicates" class="notice" hidden>Some logs have identical text despite different Moderate controls. Review those files locally; the manifest flags them.</div>
+        <p class="hint">A finished run confirms the displayed controls were processed. Check each file before treating the archive as complete.</p>
+      </section>
+
+      <div id="output-section" class="output-section" hidden><div class="eyebrow">LOCAL OUTPUT</div><p id="output-path"></p><p id="archive-note" class="hint"></p><button id="open-folder" class="secondary">Open output folder</button> <button id="open-key" class="secondary" hidden>Open private name key</button><p id="output-privacy" class="hint">Keep private/ and name_key.csv private. Review coded files before sharing: identifying details can remain. This app does not certify FERPA compliance.</p></div>
+
+      <div class="workspace-footer"><span id="activity" role="status" aria-live="polite">No collection is running.</span><button id="stop" class="danger" hidden>Stop</button></div>
+    </main>
+  </div>
+      <section id="event-summary" class="panel summary-panel" hidden aria-labelledby="summary-heading">
+        <h3 id="summary-heading">Local event summary</h3>
+        <p class="hint">One row per downloaded attempt; repeated names remain separate. Select a column heading to sort. The average uses only unambiguous Stopped viewing → Resumed pairs. Missing returns are excluded, not assumed to last until the end.</p>
+        <div id="summary-error" class="notice" hidden></div>
+        <div class="table-wrap"><table><thead><tr>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="student_name">Student name</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="total_elapsed_seconds">Total elapsed time*</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="stopped_viewing_events">Stopped viewing events</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="average_away_seconds">Average away time (seconds)</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="total_away_seconds">Total paired away time (seconds)</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="percent_elapsed_away">Elapsed time away (%)</button></th>
+          <th scope="col"><button type="button" class="text-button" data-summary-sort="longest_away_seconds">Longest paired away period (seconds)</button></th>
+        </tr></thead><tbody id="summary-rows"></tbody></table></div>
+        <p class="hint">*Uses a recognized submission event when available; otherwise shows a readable last timed event, labeled as an estimate. Earlier unreadable timestamps do not discard that estimate, but can leave away durations unavailable. Elapsed time can include long breaks; it does not measure active working time. Away durations use only valid pairs and may understate actual time when events are unmatched. Expand any “Check log” note. Unavailable values (—, or blank in the CSV) are not zero.</p>
+        <button id="open-summary" type="button" class="secondary" disabled>Open named summary CSV</button>
+        <p class="hint">This table and <strong>private/event_summary.csv</strong> contain student names, including in coded mode. The CSV and calculation notes stay outside the log sharing ZIP. Only new downloads are summarized.</p>
+        <p class="notice">These are descriptive log measurements. They cannot identify another website or application, establish ChatGPT use or prove misconduct. Instructure advises against using quiz logs to validate academic integrity.</p>
+      </section>
+  <footer class="page-footer"><p>Local log downloads and descriptive focus-event summaries.<br>Page focus events alone cannot establish LLM use or misconduct.</p><button id="quit" class="text-button">Quit local app</button></footer>
+</div>
+<dialog id="label-warning-dialog" aria-labelledby="label-warning-title" aria-describedby="label-warning-help">
+  <h2 id="label-warning-title">The quiz folder label hasn’t changed</h2>
+  <p>You used <strong id="previous-folder-label"></strong> for your previous run.</p>
+  <p id="label-warning-help">If you are collecting a different quiz, change the label before continuing. You can also choose to reuse it. Each run still creates a separate output folder.</p>
+  <div class="label-warning-actions"><button id="change-folder-label" class="primary" type="button" autofocus>Change label</button><button id="reuse-folder-label" class="secondary" type="button">Use same label</button></div>
+</dialog>
+<dialog id="about-dialog" aria-labelledby="about-title">
+  <div class="about-heading"><div><div class="eyebrow">ABOUT THIS APP</div><h2 id="about-title">Canvas Download Tools</h2></div><button id="about-close" class="secondary" type="button" autofocus>Close</button></div>
+  <p>Download the displayed event text for each View Log across recognized Canvas New Quizzes Moderate student pages. The app runs on your computer and keeps the original event wording and elapsed times. A separate local table summarizes recorded focus events; it does not classify students or misconduct.</p>
+  <p>The named summary is saved separately at <strong>private/event_summary.csv</strong>, with definitions at <strong>private/summary_method.txt</strong>. These files are not added to the log sharing ZIP. It summarizes only new downloads, including completed files from a stopped run; it does not import prior exports. Unreadable or ambiguous events are flagged, and summary failure does not stop the text downloads.</p>
+  <h3>How it works</h3>
+  <ol class="about-workflow"><li>Choose your Canvas address, local output folder and export mode.</li><li>Sign in to Canvas, open the completed quiz, and go to <strong>Build → Moderate</strong>.</li><li>Review the student names, then start. Check the first downloaded log against Canvas. In coded mode, also check its ID in the private name key.</li><li>Confirm the first log to download the remaining displayed logs. Find them in <strong>logs/</strong> and the ZIP for your selected mode.</li></ol>
+  <h3>Separate coded logs and identifying records</h3>
+  <p><strong>Coded logs (default):</strong> Each log receives a random ID. Student names and the ID-to-name lookup table are kept separately in <strong>private/name_key.csv</strong>. The <strong>private/</strong> folder also holds full original captures and capture details, which can contain identifying information. These private files are excluded from <strong>coded-logs.zip</strong>.</p>
+  <p>Coded logs omit start and finish calendar dates and clock times, and replace reviewed student names and recognizable email, web and IPv4 addresses. Other identifying information can remain in free text, so check the coded files before sharing.</p>
+  <p><strong>Named logs:</strong> Download student names, original dates and times, and the displayed event text in named files and <strong>named-logs.zip</strong>. No student coding, private name key or ID/key confirmation is used. Use this mode only in storage and services authorized for identified education records and their required classification.</p>
+  <h3>Privacy and data classification</h3>
+  <p>Separating identifying records from reviewed coded logs may allow the coded output to be handled as <strong>Sensitive rather than Restricted data</strong>, where your institution’s classification and de-identification rules permit. This separation does not automatically change the classification or guarantee anonymization. The private key and original records must retain the protections required by your institution.</p>
+  <p><strong>You are responsible for reviewing the output and following all applicable institutional privacy, data handling and FERPA rules.</strong> Nothing is automatically uploaded to AI or another service. Canvas still uses its normal institutional sign-in and connections.</p>
+  <p>Use only services approved for the data’s resulting classification. Reviewed coded logs may be eligible for tools approved for Sensitive data when your institution permits; keep identifiable originals and the name key in an environment approved for their required classification.</p>
+  <p class="hint">Recognized numbered Moderate student pages are scanned automatically and combined for one name review and export. Current filters stay in effect. Hidden attempts, additional event pages, virtual lists and collapsed details are not collected automatically. Focus events alone cannot establish misconduct.</p>
+  <p class="about-links"><a href="https://policy.ufl.edu/policy/data-classification-policy/" target="_blank" rel="noopener noreferrer">UF data classification policy</a> · <a href="https://studentprivacy.ed.gov/faq/what-constitutes-de-identified-records-and-information" target="_blank" rel="noopener noreferrer">FERPA de-identification guidance</a></p>
+</dialog>
+</body>
+</html>

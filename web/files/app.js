@@ -1,0 +1,103 @@
+'use strict';
+const $ = id => document.getElementById(id);
+const token = location.hash.slice(1) || sessionStorage.getItem('canvas-tools-token') || '';
+if (location.hash) {
+  sessionStorage.setItem('canvas-tools-token', token);
+  history.replaceState(null, '', location.pathname);
+}
+let state = null, initialized = false, busy = false, closed = false;
+const terminal = new Set(['idle', 'complete', 'stopped', 'error']);
+const stages = {
+  idle: ['Ready when you are', 'Choose your Canvas address and download folder, then open Canvas to begin.'],
+  opening: ['Opening Canvas', 'A separate browser window is opening. Sign in there yourself.'],
+  navigate: ['Open the first student', 'Navigate to SpeedGrader before activating the downloader.'],
+  connecting: ['Connecting to SpeedGrader', 'The app is checking the loaded page locally.'],
+  pick_student: ['Choose the student name', 'One click identifies the name control, even inside a separate frame.'],
+  picker_retry: ['Try the name selection again', 'The browser stays open while you correct the setup.'],
+  learning: ['Click the first submitted file', 'Click the file in the Canvas window. No downloads will run through the class until you approve.'],
+  checking: ['Check the first downloaded file', 'Confirm the file and its student name before continuing.'],
+  verifying: ['Checking the automatic click', 'The app is verifying that its automatic download matches the first file.'],
+  running: ['Downloading remaining files', 'The app moves through students automatically. Leave the Canvas window alone.'],
+  stopping: ['Stopping', 'Waiting for the current browser operation to finish. Saved files will be kept.'],
+  complete: ['Collection finished', 'Review the saved files. Test Student and recognized unanswered uploads were skipped.'],
+  stopped: ['Collection stopped', 'Your completed downloads are preserved.'],
+  error: ['Collection needs attention', 'Completed files are preserved. Check the message below before starting again.']
+};
+async function api(path, payload) {
+  const options = {headers: {'Authorization': 'Bearer ' + token}, cache: 'no-store'};
+  if (payload !== undefined) {
+    options.method = 'POST'; options.headers['Content-Type'] = 'application/json'; options.body = JSON.stringify(payload);
+  }
+  const response = await fetch((location.pathname.startsWith('/files/') ? '/files' : '') + path, options);
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'The local app could not complete that action.');
+  return result;
+}
+function showError(message) { $('local-error').textContent = message; $('local-error').hidden = !message; }
+async function action(name, extra = {}) {
+  if (busy || !state) return;
+  busy = true; showError('');
+  try {
+    await api('/api/action', {action: name, run_id: state.run_id, ...extra});
+    await refresh();
+  } catch (error) { showError(error.message); }
+  finally { busy = false; }
+}
+function render(value) {
+  state = value;
+  if (!initialized) {
+    for (const [id, key] of [['canvas-url','canvas_url'], ['output','output_base'], ['extension','extension'], ['browser','browser']]) $(id).value = value[key];
+    initialized = true;
+  }
+  const phase = value.phase, active = !terminal.has(phase);
+  const [title, description] = stages[phase] || stages.error;
+  $('stage-title').textContent = title; $('stage-description').textContent = description;
+  $('status').textContent = title; $('version').textContent = 'Version ' + (value.app_version || value.version);
+  for (const [id, expected] of [['navigate','navigate'], ['pick-student','pick_student'], ['picker-retry','picker_retry'], ['learning','learning'], ['checking','checking']]) $(id).hidden = phase !== expected;
+  $('welcome').hidden = phase !== 'idle';
+  $('error').textContent = value.error + (value.error_code ? ' Error code: ' + value.error_code : '');
+  $('error').hidden = !value.error;
+  $('stop').hidden = !active; $('stop').disabled = phase === 'stopping';
+  for (const element of $('setup').elements) element.disabled = active;
+  $('launch').textContent = phase === 'idle' ? 'Open Canvas' : 'Open Canvas for a new collection';
+  $('progress-section').hidden = !value.saved && !value.skipped && phase !== 'running';
+  $('saved-count').textContent = value.saved + (value.saved === 1 ? ' file saved' : ' files saved');
+  $('skip-count').textContent = value.skipped + ' skipped';
+  $('progress-note').textContent = active ? 'Keep the Canvas window open and leave it alone while downloads run.' : 'Completed downloads are kept in the folder below.';
+  $('output-section').hidden = !value.first_file;
+  $('output-path').textContent = value.output;
+  $('open-first').disabled = !value.first_file;
+  if (phase !== 'checking') $('reviewed').checked = false;
+  $('checked').disabled = !$('reviewed').checked;
+  const step = ['idle','opening','navigate','connecting'].includes(phase) ? 1 : ['pick_student','picker_retry','learning'].includes(phase) ? 2 : phase === 'checking' ? 3 : 4;
+  for (let i = 1; i <= 4; i++) { $('step' + i).classList.toggle('active', i === step); $('step' + i).classList.toggle('done', i < step); }
+}
+async function refresh() { render(await api('/api/state')); }
+$('setup').addEventListener('submit', event => {
+  event.preventDefault(); action('launch', {url: $('canvas-url').value, output: $('output').value, extension: $('extension').value, browser: $('browser').value, relearn: $('relearn').checked});
+});
+$('ready').onclick = () => action('ready');
+$('retry').onclick = () => action('retry');
+$('checked').onclick = () => action('checked', {reviewed: $('reviewed').checked});
+$('reviewed').onchange = () => { $('checked').disabled = !$('reviewed').checked; };
+$('stop').onclick = () => action('stop');
+$('browse').onclick = async () => {
+  $('browse').disabled = true; showError('');
+  try { const result = await api('/api/browse', {}); if (result.folder) $('output').value = result.folder; }
+  catch (error) { showError(error.message); }
+  finally { $('browse').disabled = state && !terminal.has(state.phase); }
+};
+for (const id of ['open-folder', 'open-first']) $(id).onclick = async () => {
+  try { await api('/api/' + id, {}); } catch (error) { showError(error.message); }
+};
+$('quit').onclick = async () => {
+  if (state && !terminal.has(state.phase) && !confirm('Stop this collection and quit? Completed files will be preserved.')) return;
+  try { await api('/api/quit', {}); window.dispatchEvent(new Event('canvas-tools-closed')); closed = true; $('stage-title').textContent = 'Local app closed'; $('stage-description').textContent = 'You can close this tab. Use Start App to reopen it.'; }
+  catch (error) { showError(error.message); }
+};
+async function poll() {
+  if (closed) return;
+  try { await refresh(); } catch (_) { showError('The local app is not responding. Check its launcher window or reopen it using Start App.'); }
+  setTimeout(poll, 700);
+}
+poll();
