@@ -2,7 +2,7 @@
 
 Suggested repository: `davidjulian/canvas-download-tools`. Keep the earlier applications/releases as working baselines.
 
-1. Create the new repository without an automatic license. Source sharing is prepared; license selection is deferred.
+1. Create an empty repository and include the existing LICENSE file (0BSD). Do not generate a different license during repository setup.
 2. Push this clean source repository. Do not add environments, records, profiles or outputs.
 3. Run included Windows and Mac checks. The workflow uses windows-latest, macos-15 and macos-15-intel. Complete real Mac trials in both modes as described in VALIDATION.md.
 4. Build with `python build_release.py`, or download the workflow's canvas-tools-source-packages artifact. Inspect both source ZIPs and SHA256SUMS.txt.

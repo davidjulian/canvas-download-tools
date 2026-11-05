@@ -7,6 +7,13 @@
     history.replaceState(null, '', location.pathname);
   }
   const tool = location.pathname.startsWith('/logs/') ? 'logs' : location.pathname.startsWith('/files/') ? 'files' : '';
+  const about = document.getElementById('about-dialog');
+  const aboutButton = document.getElementById('about-open');
+  if (!tool && about && aboutButton && document.getElementById('quit-all')) {
+    aboutButton.addEventListener('click', () => about.showModal());
+    document.getElementById('about-close').addEventListener('click', () => about.close());
+    about.addEventListener('close', () => aboutButton.focus());
+  }
   let overview = null, closed = false;
   window.addEventListener('canvas-tools-closed', () => { closed = true; });
   const notice = document.getElementById('shared-notice');

@@ -95,6 +95,39 @@ class CombinedTests(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("CANVAS_RUN_BROWSER_TESTS") == "1", "optional combined browser tests")
 class CombinedBrowserTests(CombinedTests):
+    def test_main_about_modal_supports_keyboard_close_and_shows_privacy_and_contact(self):
+        from playwright.sync_api import sync_playwright, expect
+        with sync_playwright() as driver:
+            browser = driver.chromium.launch(headless=True, channel=os.environ.get("CANVAS_TEST_BROWSER", "msedge" if sys.platform == "win32" else "chrome"))
+            context = browser.new_context(viewport={"width":1280, "height":1000})
+            context.route("**/*", lambda route: route.continue_() if route.request.url.startswith(self.server.origin + "/") else route.abort())
+            page = context.new_page()
+            errors = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(self.server.url)
+            button = page.get_by_role("button", name="About", exact=True)
+            dialog = page.get_by_role("dialog", name="About Canvas Download Tools", exact=True)
+            button.click()
+            expect(dialog).to_be_visible()
+            expect(dialog.get_by_role("heading", name="Your files and information stay local")).to_be_visible()
+            expect(dialog).to_contain_text("OpenAI Codex")
+            expect(dialog).to_contain_text("0BSD")
+            expect(dialog.get_by_role("link", name="djulian@ufl.edu")).to_have_attribute("href", "mailto:djulian@ufl.edu")
+            page.keyboard.press("Escape")
+            expect(dialog).not_to_be_visible()
+            expect(button).to_be_focused()
+            button.click()
+            dialog.get_by_role("button", name="Close", exact=True).click()
+            expect(dialog).not_to_be_visible()
+            expect(button).to_be_focused()
+            page.set_viewport_size({"width":390,"height":844})
+            button.click()
+            expect(dialog).to_be_visible()
+            self.assertFalse(dialog.evaluate("element => element.scrollWidth > element.clientWidth"))
+            self.assertFalse(page.evaluate("() => document.documentElement.scrollWidth > innerWidth"))
+            self.assertFalse(errors)
+            browser.close()
+
     def test_mode_navigation_shares_setup_without_exposing_the_picker_scan_ui(self):
         from playwright.sync_api import sync_playwright, expect
         with sync_playwright() as driver:

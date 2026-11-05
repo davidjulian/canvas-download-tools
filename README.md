@@ -65,8 +65,12 @@ See [SECURITY.md](SECURITY.md). Never include records, profiles, private CSVs, i
 
 Run `python -m unittest discover -s tests -q`. Set `CANVAS_RUN_BROWSER_TESTS=1` to run invented-data browser checks with installed Chrome/Edge; `CANVAS_TEST_BROWSER=chrome` or `msedge` selects the channel. Fixture requests are intercepted or blocked.
 
-Run `python build_release.py` for Windows and Mac source ZIPs and checksums under `dist/`. An explicit allowlist excludes environments, profiles, downloads and Git history and preserves Mac launcher executable bits. See [VALIDATION.md](VALIDATION.md) for actual checks and [PUBLISHING.md](PUBLISHING.md) for GitHub setup. License selection remains deferred; see [LICENSE-STATUS.md](LICENSE-STATUS.md).
+Run `python build_release.py` for Windows and Mac source ZIPs and checksums under `dist/`. An explicit allowlist excludes environments, profiles, downloads and Git history and preserves Mac launcher executable bits. See [VALIDATION.md](VALIDATION.md) for actual checks and [PUBLISHING.md](PUBLISHING.md) for GitHub setup. The project uses the [0BSD license](LICENSE), permitting use, modification and redistribution without an acknowledgement or notice-retention requirement. Dependencies retain their own licenses.
 
 After updating an already running copy, finish or stop the collection, use Quit local app, then reopen Start App. Refreshing the browser page does not reload the Python downloader. Submitted files shows a restart notice when newer interface files meet an older backend.
 
 The Submitted files Collection panel shows only the current step. Its five steps separate opening SpeedGrader, selecting the name field, clicking the file link, reviewing the first file and downloading the rest. Edge may briefly show its temporary download location; use Open download folder in the app for the final renamed copy.
+
+## About and contact
+
+The main-page About dialog explains both tools, local data handling, and development by David Julian using OpenAI Codex. Codex helped develop the software; the running app does not send Canvas records to Codex or another AI service. Contact David Julian at [djulian@ufl.edu](mailto:djulian@ufl.edu). Use invented examples in problem reports, not student records or sign-in information.

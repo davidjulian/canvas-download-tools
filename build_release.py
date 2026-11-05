@@ -6,7 +6,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parent
 FILES = (
-    ".gitignore", ".gitattributes", "README.md", "SECURITY.md", "LICENSE-STATUS.md", "VALIDATION.md", "PUBLISHING.md",
+    ".gitignore", ".gitattributes", "README.md", "SECURITY.md", "LICENSE", "VALIDATION.md", "PUBLISHING.md",
     "requirements.txt", "Install.cmd", "Install.command", "Start App.cmd", "Start App.command",
     "local_app.py", "file_app.py", "log_app.py", "quick_capture.py", "moderate_pages.py", "coded_export.py", "event_summary.py",
     "http_ui.py", "canvas_helpers.py", "desktop.py", "native_edge.py",
