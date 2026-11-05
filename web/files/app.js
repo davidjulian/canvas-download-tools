@@ -8,18 +8,18 @@ if (location.hash) {
 let state = null, initialized = false, busy = false, closed = false, pickerDefaultsKey = '';
 const terminal = new Set(['idle', 'complete', 'stopped', 'error']);
 const stages = {
-  idle: ['Ready when you are', 'Choose your Canvas address and download folder, then open Canvas to begin.'],
-  opening: ['Opening Canvas', 'A separate browser window is opening. Sign in there yourself.'],
-  navigate: ['Open SpeedGrader', 'SpeedGrader normally opens directly to a student. Wait for that submission to load, then continue.'],
+  idle: ['Set up a collection', 'Complete the Set up a collection fields, then select Open Canvas.'],
+  opening: ['Opening Canvas', 'Wait for the separate Canvas window to open.'],
+  navigate: ['Open SpeedGrader', ''],
   connecting: ['Connecting to SpeedGrader', 'The app is checking the loaded page locally.'],
-  pick_student: ['Click the current student’s name field', 'Switch to Canvas and click the name field once without changing students.'],
+  pick_student: ['Click the current student’s name field', ''],
   picker_retry: ['Try the name selection again', 'The browser stays open while you correct the setup.'],
-  learning: ['Click the first submitted file', 'Click the file in the Canvas window. No downloads will run through the class until you approve.'],
-  checking: ['Check the first downloaded file', 'Confirm the file and its student name before continuing.'],
+  learning: ['Click the submitted file link', ''],
+  checking: ['Check the first downloaded file', ''],
   verifying: ['Checking the automatic click', 'The app is verifying that its automatic download matches the first file.'],
   running: ['Downloading remaining files', 'The app moves through students automatically. Leave the Canvas window alone.'],
   stopping: ['Stopping', 'Waiting for the current browser operation to finish. Saved files will be kept.'],
-  complete: ['Collection finished', 'Review the saved files. Test Student and recognized unanswered uploads were skipped.'],
+  complete: ['Collection finished', 'Use Open download folder to review your saved files.'],
   stopped: ['Collection stopped', 'Your completed downloads are preserved.'],
   error: ['Collection needs attention', 'Completed files are preserved. Check the message below before starting again.']
 };
@@ -65,9 +65,10 @@ function render(value) {
   }
   const [title, description] = stages[phase] || stages.error;
   $('stage-title').textContent = title; $('stage-description').textContent = description;
+  $('stage-description').hidden = !description;
   $('status').textContent = title; $('version').textContent = 'Version ' + (value.app_version || value.version);
   for (const [id, expected] of [['navigate','navigate'], ['pick-student','pick_student'], ['picker-retry','picker_retry'], ['learning','learning'], ['checking','checking']]) $(id).hidden = phase !== expected;
-  $('welcome').hidden = phase !== 'idle';
+  $('download-location-note').hidden = value.browser !== 'msedge' || !['learning','checking','verifying','running'].includes(phase);
   $('error').textContent = value.error + (value.error_code ? ' Error code: ' + value.error_code : '');
   $('error').hidden = !value.error;
   $('stop').hidden = !active; $('stop').disabled = phase === 'stopping';
@@ -82,8 +83,13 @@ function render(value) {
   $('open-first').disabled = !value.first_file;
   if (phase !== 'checking') $('reviewed').checked = false;
   $('checked').disabled = !$('reviewed').checked;
-  const step = ['idle','opening','navigate','connecting'].includes(phase) ? 1 : ['pick_student','picker_retry','learning'].includes(phase) ? 2 : phase === 'checking' ? 3 : 4;
-  for (let i = 1; i <= 4; i++) { $('step' + i).classList.toggle('active', i === step); $('step' + i).classList.toggle('done', i < step); }
+  const step = phase === 'idle' ? 0 : ['opening','navigate','connecting'].includes(phase) ? 1 : ['pick_student','picker_retry'].includes(phase) ? 2 : phase === 'learning' ? 3 : phase === 'checking' ? 4 : 5;
+  for (let i = 1; i <= 5; i++) {
+    $('step' + i).classList.toggle('active', i === step);
+    $('step' + i).classList.toggle('done', i < step);
+    if (i === step) $('step' + i).setAttribute('aria-current', 'step');
+    else $('step' + i).removeAttribute('aria-current');
+  }
 }
 async function refresh() { render(await api('/api/state')); }
 $('setup').addEventListener('submit', event => {

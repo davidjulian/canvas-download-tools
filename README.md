@@ -68,3 +68,5 @@ Run `python -m unittest discover -s tests -q`. Set `CANVAS_RUN_BROWSER_TESTS=1` 
 Run `python build_release.py` for Windows and Mac source ZIPs and checksums under `dist/`. An explicit allowlist excludes environments, profiles, downloads and Git history and preserves Mac launcher executable bits. See [VALIDATION.md](VALIDATION.md) for actual checks and [PUBLISHING.md](PUBLISHING.md) for GitHub setup. License selection remains deferred; see [LICENSE-STATUS.md](LICENSE-STATUS.md).
 
 After updating an already running copy, finish or stop the collection, use Quit local app, then reopen Start App. Refreshing the browser page does not reload the Python downloader. Submitted files shows a restart notice when newer interface files meet an older backend.
+
+The Submitted files Collection panel shows only the current step. Its five steps separate opening SpeedGrader, selecting the name field, clicking the file link, reviewing the first file and downloading the rest. Edge may briefly show its temporary download location; use Open download folder in the app for the final renamed copy.
