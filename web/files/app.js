@@ -5,14 +5,14 @@ if (location.hash) {
   sessionStorage.setItem('canvas-tools-token', token);
   history.replaceState(null, '', location.pathname);
 }
-let state = null, initialized = false, busy = false, closed = false;
+let state = null, initialized = false, busy = false, closed = false, pickerDefaultsKey = '';
 const terminal = new Set(['idle', 'complete', 'stopped', 'error']);
 const stages = {
   idle: ['Ready when you are', 'Choose your Canvas address and download folder, then open Canvas to begin.'],
   opening: ['Opening Canvas', 'A separate browser window is opening. Sign in there yourself.'],
-  navigate: ['Open the first student', 'Navigate to SpeedGrader before activating the downloader.'],
+  navigate: ['Open SpeedGrader', 'SpeedGrader normally opens directly to a student. Wait for that submission to load, then continue.'],
   connecting: ['Connecting to SpeedGrader', 'The app is checking the loaded page locally.'],
-  pick_student: ['Choose the student name', 'One click identifies the name control, even inside a separate frame.'],
+  pick_student: ['Click the current student’s name field', 'Switch to Canvas and click the name field once without changing students.'],
   picker_retry: ['Try the name selection again', 'The browser stays open while you correct the setup.'],
   learning: ['Click the first submitted file', 'Click the file in the Canvas window. No downloads will run through the class until you approve.'],
   checking: ['Check the first downloaded file', 'Confirm the file and its student name before continuing.'],
@@ -50,6 +50,19 @@ function render(value) {
     initialized = true;
   }
   const phase = value.phase, active = !terminal.has(phase);
+  const restartRequired = value.name_click_setup_supported !== true;
+  $('update-note').hidden = !restartRequired;
+  if (!active && value.picker_saved !== undefined && $('browser').value === value.browser && $('canvas-url').value === value.canvas_url) {
+    const key = JSON.stringify([value.browser, value.canvas_url, value.picker_saved]);
+    if (key !== pickerDefaultsKey) {
+      $('relearn').checked = !value.picker_saved;
+      $('name-setup').open = !value.picker_saved;
+      pickerDefaultsKey = key;
+    }
+    $('picker-hint').textContent = value.picker_saved
+      ? 'A name field is saved for this Canvas site and browser. Check the box to choose it again.'
+      : 'No name field is saved for this Canvas site and browser. The app will ask you to click the current student’s name field.';
+  }
   const [title, description] = stages[phase] || stages.error;
   $('stage-title').textContent = title; $('stage-description').textContent = description;
   $('status').textContent = title; $('version').textContent = 'Version ' + (value.app_version || value.version);
@@ -58,7 +71,7 @@ function render(value) {
   $('error').textContent = value.error + (value.error_code ? ' Error code: ' + value.error_code : '');
   $('error').hidden = !value.error;
   $('stop').hidden = !active; $('stop').disabled = phase === 'stopping';
-  for (const element of $('setup').elements) element.disabled = active;
+  for (const element of $('setup').elements) element.disabled = active || restartRequired;
   $('launch').textContent = phase === 'idle' ? 'Open Canvas' : 'Open Canvas for a new collection';
   $('progress-section').hidden = !value.saved && !value.skipped && phase !== 'running';
   $('saved-count').textContent = value.saved + (value.saved === 1 ? ' file saved' : ' files saved');

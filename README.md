@@ -7,7 +7,7 @@ One local app with two tools for instructors using Canvas New Quizzes:
 | **Quiz activity logs** | Collect View Log text across Moderate student pages, choose named or coded output, and produce a local descriptive focus-event summary. |
 | **Submitted files** | Download a file in SpeedGrader, move to the next student and repeat, with the student's surname at the beginning of each filename. |
 
-**Version 0.2.0 — release candidate.** The collectors are preserved behind a shared local interface. Windows checks run locally. Mac support and Apple silicon/Intel CI jobs are included; a real Mac trial remains required before a stable release. The earlier standalone applications are unchanged.
+**Version 0.2.1 — release candidate.** The collectors are preserved behind a shared local interface. Windows checks run locally. Mac support and Apple silicon/Intel CI jobs are included; a real Mac trial remains required before a stable release. The earlier standalone applications are unchanged.
 
 ## Install and launch
 
@@ -19,7 +19,7 @@ Requires Python 3.10+ and installed Microsoft Edge or Google Chrome. Windows 11+
 
 ## Shared setup
 
-Choose a tool on the opening screen or in the navigation at the top. Enter your institution's HTTPS Canvas home address and choose the output folder and installed browser. These settings are remembered and carry between tools, including before a run starts. Downloads is the initial output folder: Windows's configured system Downloads directory or `~/Downloads` on Mac. Browse and pasted folder paths are supported. The app does not read customized browser download preferences.
+Choose a tool on the opening screen or in the navigation at the top. Enter your institution's HTTPS Canvas home address (the example is `https://elearning.ufl.edu/`) and choose the output folder and installed browser. These settings are remembered and carry between tools, including before a run starts. Downloads is the initial output folder: Windows's configured system Downloads directory or `~/Downloads` on Mac. Browse and pasted folder paths are supported. The app does not read customized browser download preferences.
 
 Only one collection can run at a time. Finish or Stop before switching tools. Switching closes a completed tool's retained Canvas window, preserving its files, results and sign-in profile. Each tool keeps its own profile and startup method to preserve the working collection behavior; you may need to sign in once in each. **Quit local app** closes both tools and their owned Canvas windows.
 
@@ -41,8 +41,8 @@ The descriptive summary reports elapsed time and paired focus/away events. Focus
 ## Submitted files
 
 1. Choose **Submitted files**. Leave File type blank for all types, or enter one extension such as `pdf`, `docx` or `model`.
-2. Select **Open Canvas**. Sign in, open SpeedGrader for the completed New Quiz, choose the **first real student**, select the **latest submission** and wait for its upload to appear. The quiz tab may remain open. Select **SpeedGrader is ready**.
-3. If asked, click the **currently displayed student's name field once** in Canvas, without changing students. The location is remembered locally. There is no picker-cycling interface. If the saved location changes, click the field again. Student name setup forces fresh identification.
+2. Select **Open Canvas**. Sign in, open SpeedGrader for the completed New Quiz, keep the student already displayed (normally the first), or go to the first real student you want to process. Select the **latest submission** and wait for its upload to appear. The quiz tab may remain open. Select **SpeedGrader is ready**.
+3. If no saved entry exists, **Choose the student name control** is checked by default. Checking it always requests a fresh selection, including when Canvas has a built-in or hidden selector. When prompted, click the **currently displayed student's name field once** in Canvas, without changing students. The location is remembered locally. There is no picker-cycling interface. If the saved location changes, click the field again. Student name setup forces fresh identification.
 4. When prompted, click **one submitted filename** in Canvas that downloads the actual file.
 5. Open the saved file or folder. Check the contents and student association, check the review box, then select **Checked — download remaining files**.
 6. Leave Canvas alone while the app verifies its automatic click and continues through the current list, stopping when Next is disabled or the list returns to the first student.
@@ -66,3 +66,5 @@ See [SECURITY.md](SECURITY.md). Never include records, profiles, private CSVs, i
 Run `python -m unittest discover -s tests -q`. Set `CANVAS_RUN_BROWSER_TESTS=1` to run invented-data browser checks with installed Chrome/Edge; `CANVAS_TEST_BROWSER=chrome` or `msedge` selects the channel. Fixture requests are intercepted or blocked.
 
 Run `python build_release.py` for Windows and Mac source ZIPs and checksums under `dist/`. An explicit allowlist excludes environments, profiles, downloads and Git history and preserves Mac launcher executable bits. See [VALIDATION.md](VALIDATION.md) for actual checks and [PUBLISHING.md](PUBLISHING.md) for GitHub setup. License selection remains deferred; see [LICENSE-STATUS.md](LICENSE-STATUS.md).
+
+After updating an already running copy, finish or stop the collection, use Quit local app, then reopen Start App. Refreshing the browser page does not reload the Python downloader. Submitted files shows a restart notice when newer interface files meet an older backend.

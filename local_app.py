@@ -15,7 +15,7 @@ import log_app
 from http_ui import LocalServer
 from windows_paths import downloads_directory
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 MODES = {"logs", "files"}
 TERMINAL = {"idle", "complete", "stopped", "error"}
 

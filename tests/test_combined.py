@@ -106,6 +106,8 @@ class CombinedBrowserTests(CombinedTests):
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(self.server.url)
             page.get_by_role("link", name="Submitted files", exact=False).first.click()
+            page.wait_for_url("**/files/")
+            self.assertEqual(page.locator("#canvas-url").get_attribute("placeholder"), "https://elearning.ufl.edu/")
             page.locator("#canvas-url").fill("https://canvas-fixture.invalid/")
             page.locator("#output").fill(str(self.root))
             page.locator(".tool-switch a[data-tool='logs']").click()

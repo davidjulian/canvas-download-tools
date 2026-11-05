@@ -362,7 +362,7 @@ def navigation_button(page, direction):
     return matches[0]
 
 
-def point_student_picker(page, timeout=120000, check_cancel=None):
+def point_student_picker(page, timeout=120000, check_cancel=None, bring_to_front=True):
     assignment, student = assignment_key(page), student_url_identity(page)
     key = "__local_student_control_" + secrets.token_hex(8)
     armed = []
@@ -383,7 +383,8 @@ def point_student_picker(page, timeout=120000, check_cancel=None):
         arm(frame)
     print("Click the currently displayed student's NAME once in SpeedGrader, in whichever frame contains it. "
           "Click the displayed name, not a different student in its menu. Ctrl+C stops setup.", flush=True)
-    page.bring_to_front()
+    if bring_to_front:
+        page.bring_to_front()
     while time.monotonic() < deadline:
         if check_cancel:
             check_cancel()

@@ -69,3 +69,11 @@ def validate_url(value):
             or parsed.query or parsed.fragment):
         raise UIError("Use your HTTPS Canvas home address without sign-in tokens, query parameters or fragments.")
     return value
+
+
+def collection_origin(value):
+    """UF's public login page links to this Canvas host; other origins stay exact."""
+    parsed = urlsplit(value)
+    if parsed.scheme == "https" and parsed.netloc.lower() in {"elearning.ufl.edu", "elearning.ufl.edu:443"}:
+        return "https://ufl.instructure.com/"
+    return parsed.scheme + "://" + parsed.netloc + "/"

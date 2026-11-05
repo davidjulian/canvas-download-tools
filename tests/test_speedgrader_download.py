@@ -13,6 +13,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import speedgrader_download as app
+from canvas_helpers import collection_origin
 
 
 ORIGIN = "http://speedgrader-fixture.invalid"
@@ -26,6 +27,12 @@ document.querySelector('select').value;}load();</script>'''
 
 
 class LocationTests(unittest.TestCase):
+    def test_uf_login_example_recognizes_its_canvas_host_without_widening_other_origins(self):
+        canvas = SimpleNamespace(url="https://ufl.instructure.com/courses/1/gradebook/speed_grader?assignment_id=2")
+        context = SimpleNamespace(pages=[canvas])
+        self.assertEqual(app.speedgrader_pages(context, collection_origin("https://elearning.ufl.edu/")), [canvas])
+        self.assertEqual(app.speedgrader_pages(context, collection_origin("https://elearning.ufl.edu.evil.invalid/")), [])
+        self.assertEqual(collection_origin("https://canvas-fixture.invalid/"), "https://canvas-fixture.invalid/")
     def test_unicode_filename_fits_windows_and_mac_component_limits(self):
         name = app.download_filename('报告' * 160 + '.PDF', '学生' * 50, '', 1, None)
         self.assertTrue(name.endswith('.PDF'))

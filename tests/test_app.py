@@ -1,6 +1,7 @@
 """Local interface and invented records only. External test requests are blocked."""
 import contextlib
 import http.client
+import hashlib
 import io
 import json
 import os
@@ -127,16 +128,65 @@ class InterfaceTests(unittest.TestCase):
         self.assertEqual(errors, ["stopped_by_user"])
         self.assertFalse(worker.is_alive())
 
+    def test_force_name_click_is_honored_even_with_a_native_student_selector(self):
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+        with patch.object(app, "restore_picker", return_value=True) as restore, \
+                patch.object(app, "point_student_picker") as point, patch.object(app, "remember_picker"):
+            self.app.identify_student_name(page, "msedge", True)
+        restore.assert_not_called()
+        point.assert_called_once_with(page, check_cancel=self.app.check_cancel, bring_to_front=False)
+
+    def test_missing_saved_name_always_prompts_but_a_restored_entry_can_be_reused(self):
+        page = MagicMock()
+        page.locator.return_value.count.return_value = 1
+        with patch.object(app, "restore_picker", return_value=False), \
+                patch.object(app, "point_student_picker") as point, patch.object(app, "remember_picker"):
+            self.app.identify_student_name(page, "msedge", False)
+        point.assert_called_once()
+        with patch.object(app, "restore_picker", return_value=True), patch.object(app, "point_student_picker") as point:
+            self.app.identify_student_name(page, "msedge", False)
+        point.assert_not_called()
+
+    def test_saved_name_default_is_scoped_to_canvas_site_and_browser(self):
+        self.app.root.mkdir(parents=True)
+        self.app.update(canvas_url="https://canvas-fixture.invalid/", browser="msedge")
+        self.assertFalse(self.app.snapshot()["picker_saved"])
+        data = {"version":1, "origin":hashlib.sha256(b"https://canvas-fixture.invalid").hexdigest(),
+                "frame_path":[], "selector":"body > input", "tag":"INPUT",
+                "frame_signature":"invented-hash", "control_signature":"invented-shape"}
+        (self.app.root / "student-picker-msedge.json").write_text(json.dumps(data), encoding="utf-8")
+        self.assertTrue(self.app.snapshot()["picker_saved"])
+        self.app.update(browser="chrome")
+        self.assertFalse(self.app.snapshot()["picker_saved"])
+        self.app.update(browser="msedge", canvas_url="https://another-campus.invalid/")
+        self.assertFalse(self.app.snapshot()["picker_saved"])
+
 
 @unittest.skipUnless(os.environ.get("CANVAS_RUN_BROWSER_TESTS") == "1", "optional invented browser workflow")
 class BrowserInterfaceTests(InterfaceTests):
+    def test_updated_interface_requires_restart_of_an_older_backend(self):
+        from playwright.sync_api import sync_playwright, expect
+        self.app.state.pop("name_click_setup_supported")
+        with sync_playwright() as driver:
+            browser = driver.chromium.launch(headless=True, channel=os.environ.get("CANVAS_TEST_BROWSER", "msedge" if sys.platform == "win32" else "chrome"))
+            context = browser.new_context()
+            context.route("**/*", lambda route: route.continue_() if route.request.url.startswith(self.server.origin + "/") else route.abort())
+            page = context.new_page()
+            page.goto(self.server.url)
+            expect(page.locator("#update-note")).to_be_visible()
+            expect(page.locator("#launch")).to_be_disabled()
+            expect(page.locator("#quit")).to_be_enabled()
+            browser.close()
+
     def test_buttons_drive_the_real_collector_and_keep_private_data_off_the_interface(self):
-        from playwright.sync_api import sync_playwright
+        from playwright.sync_api import sync_playwright, expect
         from test_learned_download import OUTER
         origin = "https://canvas-fixture.invalid"
         output = self.root / "downloads"
         output.mkdir()
         downloads = []
+        allow_name_click = threading.Event()
         class InventedBrowser:
             def __init__(self, *args, **kwargs):
                 self.browser = None
@@ -145,14 +195,15 @@ class BrowserInterfaceTests(InterfaceTests):
             def connect(self, driver, artifacts):
                 self.browser = driver.chromium.launch(headless=True, channel=os.environ.get("CANVAS_TEST_BROWSER", "msedge" if sys.platform == "win32" else "chrome"))
                 context = self.browser.new_context(accept_downloads=True)
+                context.expose_function("allowNameClick", lambda: allow_name_click.is_set())
                 def route(request):
                     from urllib.parse import urlsplit, parse_qs
                     parsed = urlsplit(request.request.url)
                     if not request.request.url.startswith(origin + "/"):
                         request.abort()
                     elif parsed.path.endswith("/speed_grader"):
-                        body = OUTER.replace('<input id="name" role="combobox" value="Invented Same Name" readonly>', '<select id="students_selectmenu"><option>Invented Same Name</option></select><input id="name" role="combobox" value="Invented Same Name" readonly>')
-                        body += "<script>setInterval(()=>document.querySelector('#students_selectmenu option').textContent=document.querySelector('#name').value,10)</script>"
+                        body = OUTER.replace('<input id="name" role="combobox" value="Invented Same Name" readonly>', '<select id="students_selectmenu" style="display:none"><option>Hidden Incorrect Name</option></select><input id="name" role="combobox" value="Invented Same Name" readonly>')
+                        body += "<script>let pointed=false;const nameTimer=setInterval(async()=>{if(!pointed && Object.keys(window).some(k=>k.startsWith('__local_student_control_')) && await window.allowNameClick()){pointed=true;clearInterval(nameTimer);document.querySelector('#name').click()}},50)</script>"
                         request.fulfill(content_type="text/html", body=body)
                     elif parsed.path == "/submission":
                         student = parse_qs(parsed.query)["id"][0]
@@ -184,9 +235,12 @@ class BrowserInterfaceTests(InterfaceTests):
                 page.goto(self.interface_url())
                 page.locator("#canvas-url").fill(origin)
                 page.locator("#output").fill(str(output))
+                expect(page.locator("#relearn")).to_be_checked()
                 page.locator("#launch").click()
                 page.locator("#ready").wait_for(state="visible")
                 page.locator("#ready").click()
+                page.locator("#pick-student").wait_for(state="visible", timeout=30000)
+                allow_name_click.set()
                 page.locator("#checking").wait_for(state="visible", timeout=30000)
                 self.assertEqual(downloads, ["101"])
                 self.assertTrue(page.locator("#checked").is_disabled())
@@ -198,4 +252,7 @@ class BrowserInterfaceTests(InterfaceTests):
                 self.assertNotIn("Invented Same Name", json.dumps(self.collector.snapshot()))
                 self.assertEqual(len(list(Path(self.collector.snapshot()["output"]).iterdir())), 3)
                 self.assertFalse(errors)
+                expect(page.locator("#relearn")).not_to_be_checked()
+                self.assertNotIn("Hidden", json.dumps(self.collector.snapshot()))
+                self.assertTrue(Path(self.collector.snapshot()["first_file"]).name.startswith("Name_Invented_Same_"))
                 browser.close()

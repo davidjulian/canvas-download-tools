@@ -42,6 +42,8 @@ CLICK_SCRIPT = r"""key => {
 
 
 def student_reader(page):
+    if getattr(page, "_pilot_confirmed_student_picker", None):
+        return modern_student_record(page)
     if page.locator(STUDENTS).count() == 1:
         name = normalize_name(page.locator(STUDENTS).locator("option:checked").inner_text())
         return student_url_identity(page), name

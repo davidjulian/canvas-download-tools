@@ -11,7 +11,7 @@ on:
       tag:
         description: Draft prerelease tag
         type: string
-        default: v0.2.0-rc1
+        default: v0.2.1-rc1
 permissions:
   contents: read
 jobs:

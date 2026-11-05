@@ -7,7 +7,7 @@ import sys
 import threading
 import webbrowser
 
-from canvas_helpers import UIError, validate_url
+from canvas_helpers import UIError, validate_url, collection_origin
 from desktop import browse_folder, open_path
 from download_destination import run_folder
 from http_ui import LocalServer
@@ -15,7 +15,7 @@ from learned_download import LearnedBatch, file_type, safe_failure
 from native_edge import NativeEdge
 from speedgrader_download import (DownloadError, STUDENTS, local_root, point_student_picker,
                                   speedgrader_pages, validate_locations)
-from student_picker_cache import remember_picker, restore_picker
+from student_picker_cache import remember_picker, restore_picker, saved_picker_available
 from windows_paths import downloads_directory
 
 VERSION = "0.1.0"
@@ -70,6 +70,7 @@ class LocalApp:
         self.state = {"version": VERSION, "phase": "idle", "saved": 0, "skipped": 0,
                       "visited": 0, "output": "", "first_file": "", "error": "", "error_code": "",
                       "browser_open": False, "run_id": "", "canvas_url": "", "extension": "",
+                      "name_click_setup_supported": True,
                       "output_base": "", "browser": "chrome" if sys.platform == "darwin" else "msedge"}
         try:
             self.state["output_base"] = str(downloads_directory())
@@ -85,7 +86,10 @@ class LocalApp:
 
     def snapshot(self):
         with self.condition:
-            return dict(self.state)
+            state = dict(self.state)
+        state["picker_saved"] = saved_picker_available(
+            self.root / ("student-picker-" + state["browser"] + ".json"), state["canvas_url"])
+        return state
 
     def update(self, **values):
         with self.condition:
@@ -191,7 +195,7 @@ class LocalApp:
                     context = native.connect(driver, out.parent / ("temporary-" + secrets.token_hex(8)))
                     while True:
                         self.check_cancel()
-                        pages = speedgrader_pages(context, url)
+                        pages = speedgrader_pages(context, collection_origin(url))
                         if len(pages) == 1:
                             break
                         # Pump the existing context while the instructor fixes tabs.
@@ -201,22 +205,7 @@ class LocalApp:
                         self.wait_for_action("navigate", pump, error=MESSAGES["keep_one_speedgrader_tab_open"])
                     page = pages[0]
                     self.update(error="")
-                    if page.locator(STUDENTS).count() == 0:
-                        cache = self.root / ("student-picker-" + channel + ".json")
-                        if relearn or not restore_picker(page, cache):
-                            while True:
-                                self.update(phase="pick_student", error="")
-                                try:
-                                    point_student_picker(page, check_cancel=self.check_cancel)
-                                    break
-                                except DownloadError as error:
-                                    if str(error) == "stopped_by_user":
-                                        raise
-                                    self.wait_for_action("picker_retry", page, error="The click did not identify the current student name. Try again without changing students.")
-                            try:
-                                remember_picker(page, cache)
-                            except OSError:
-                                pass
+                    self.identify_student_name(page, channel, relearn)
                     batch = WebBatch(page, out, self, extension=extension, files_dir=files)
                     batch.run()
                     self.update(phase="complete", error="")
@@ -229,6 +218,25 @@ class LocalApp:
         finally:
             native.close()
             self.update(browser_open=False)
+
+    def identify_student_name(self, page, channel, relearn):
+        cache = self.root / ("student-picker-" + channel + ".json")
+        if not relearn and restore_picker(page, cache):
+            return
+        while True:
+            self.update(phase="pick_student", error="")
+            try:
+                # Keep the app visible so its instruction is not hidden by Canvas.
+                point_student_picker(page, check_cancel=self.check_cancel, bring_to_front=False)
+                break
+            except DownloadError as error:
+                if str(error) == "stopped_by_user":
+                    raise
+                self.wait_for_action("picker_retry", page, error="Click the currently displayed student's name field without choosing another student, then try again.")
+        try:
+            remember_picker(page, cache)
+        except OSError:
+            pass
 
     def browse(self):
         if not self.dialog_lock.acquire(blocking=False):
