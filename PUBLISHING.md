@@ -1,6 +1,6 @@
 # Publish Canvas Download Tools
 
-Suggested repository: `davidjulian/canvas-download-tools`. Keep the earlier applications/releases as working baselines.
+Repository: `davidjulian/canvas-download-tools`. Local copies of the earlier applications are preserved as working baselines; the combined repository replaces their public distribution.
 
 1. Create an empty repository and include the existing LICENSE file (0BSD). Do not generate a different license during repository setup.
 2. Push this clean source repository. Do not add environments, records, profiles or outputs.

@@ -57,6 +57,8 @@ class NativeBrowserTests(unittest.TestCase):
         self.native.start("data:text/html,<title>Invented page before activation</title><p>Ready</p>")
         context = self.connect()
         page = context.pages[0]
+        from playwright.sync_api import expect
+        expect(page).to_have_title("Invented page before activation")
         self.assertEqual(page.title(), "Invented page before activation")
         self.assertTrue(page.url.startswith("data:text/html,"))
 

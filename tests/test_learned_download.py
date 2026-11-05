@@ -301,7 +301,7 @@ class LearnedLoopTests(unittest.TestCase):
         self.assertFalse((batch.private / "files").exists())
         self.assertTrue((batch.private / "manifest.json").exists())
         self.assertFalse((destination / "manifest.json").exists())
-        self.assertEqual([Path(record["file"]).parent for record in batch.records], [destination] * 3)
+        self.assertEqual([Path(record["file"]).parent.resolve() for record in batch.records], [destination.resolve()] * 3)
         self.assertEqual([Path(r["file"]).read_bytes() for r in batch.records],
                          [b"Invented model 101", b"Invented model 102", b"Invented model 103"])
 

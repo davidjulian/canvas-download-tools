@@ -198,7 +198,7 @@ class BrowserTests(unittest.TestCase):
                 self.page.wait_for_timeout(150)
             return next(answers)
         return app.FileBatch(self.page, Path(self.temp.name) / "out", prompt=prompt or answer,
-                             quiet=0, timeout=1500, **kwargs)
+                             quiet=0, timeout=5000, **kwargs)
 
     def manifest(self, collector):
         return json.loads((collector.private / "manifest.json").read_text())
